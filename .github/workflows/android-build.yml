@@ -20,53 +20,54 @@ jobs:
 
     - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件（跳过 .github）
       run: |
-        # 1. 找到 legado-*.zip
         ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
         if [ -z "$ZIP_FILE" ]; then
           echo "❌ 未找到 legado-*.zip 文件！"
           exit 1
         fi
         echo "✅ 找到 zip 文件：$ZIP_FILE"
-        
-        # 2. 复制到根目录
         cp "$ZIP_FILE" ./legado-src.zip
-        
-        # 3. 删除旧示例代码（确保根目录干净）
         rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat settings.gradle
-        
-        # 4. 解压
         unzip -o legado-src.zip
         rm -f legado-src.zip
-        
-        # 5. 找到解压出来的 legado-* 文件夹
         EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
         if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
           echo "✅ 发现解压文件夹：$EXTRACTED_DIR"
-          # 移动内容到根目录，但跳过 .github 文件夹（避免覆盖 workflows）
           shopt -s dotglob
           for item in "$EXTRACTED_DIR"/*; do
             basename=$(basename "$item")
-            # 跳过 .github 和 .git 文件夹
             if [ "$basename" != ".github" ] && [ "$basename" != ".git" ]; then
               mv "$item" ./
             else
-              echo "⏭️ 跳过 $basename（保留现有）"
+              echo "⏭️ 跳过 $basename"
             fi
           done
           rm -rf "$EXTRACTED_DIR"
         fi
-        
-        # 6. 确保 gradlew 可执行
         chmod +x gradlew 2>/dev/null || echo "⚠️ gradlew 不存在"
-        
-        # 7. 显示根目录内容（调试）
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 编译 Debug APK
+    - name: 修补缺失颜色资源并编译 Debug APK
       run: |
+        # 修补缺失的 colorPrimary, colorPrimaryDark, colorAccent
+        if [ -f app/src/main/res/values/colors.xml ]; then
+          echo "修补颜色资源..."
+          if ! grep -q "name=\"colorPrimary\"" app/src/main/res/values/colors.xml; then
+            sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' app/src/main/res/values/colors.xml
+          fi
+          if ! grep -q "name=\"colorPrimaryDark\"" app/src/main/res/values/colors.xml; then
+            sed -i '/<\/resources>/i\    <color name="colorPrimaryDark">#303F9F</color>' app/src/main/res/values/colors.xml
+          fi
+          if ! grep -q "name=\"colorAccent\"" app/src/main/res/values/colors.xml; then
+            sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' app/src/main/res/values/colors.xml
+          fi
+        else
+          echo "⚠️ colors.xml 不存在，跳过修补"
+        fi
+        # 开始编译
         if [ -f gradlew ]; then
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
         else
           echo "❌ gradlew 不存在，退出"
           exit 1
