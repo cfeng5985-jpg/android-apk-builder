@@ -20,31 +20,27 @@ jobs:
 
     - name: 清理旧文件并解压你的源码
       run: |
-        # 删除旧示例代码
+        # 彻底删除所有非隐藏的旧文件（保留 .git 和 .github）
         rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat
-        # 解压你的 zip
+        # 解压你的包
         unzip -o legado-3.26081121.zip
-        # 如果解压后多了一层同名文件夹，把内容移到根目录
+        # 如果解压后多了一层同名文件夹，把内容全部移到根目录（包括隐藏文件）
         if [ -d legado-3.26081121 ]; then
+          shopt -s dotglob
           mv legado-3.26081121/* ./
           rm -rf legado-3.26081121
         fi
-        chmod +x gradlew 2>/dev/null || true
-        # 【调试】显示当前根目录所有文件
-        echo "=== 当前根目录文件列表 ==="
+        # 确保 gradlew 可执行
+        chmod +x gradlew
+        chmod +x gradlew.bat 2>/dev/null || true
+        # 显示当前目录，便于调试
+        echo "=== 当前目录内容 ==="
         ls -la
-        echo "=== 如果有 app 文件夹，显示其内容 ==="
-        if [ -d app ]; then ls -la app/; else echo "⚠️ app 文件夹不存在！"; fi
-        if [ -f gradlew ]; then echo "✅ gradlew 存在"; else echo "❌ gradlew 不存在"; fi
+        echo "=== 检查 app 目录 ==="
+        ls -la app/ || echo "⚠️ app 目录不存在"
 
     - name: 编译 Debug APK
-      run: |
-        if [ -f gradlew ]; then
-          ./gradlew assembleDebug
-        else
-          echo "❌ gradlew 不存在，编译终止"
-          exit 1
-        fi
+      run: ./gradlew assembleDebug
 
     - name: 上传 APK
       uses: actions/upload-artifact@v4
