@@ -48,24 +48,33 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 修补缺失颜色资源并编译 Debug APK
+    - name: 全局修补缺失的颜色资源
       run: |
-        # 修补缺失的 colorPrimary, colorPrimaryDark, colorAccent
-        if [ -f app/src/main/res/values/colors.xml ]; then
-          echo "修补颜色资源..."
-          if ! grep -q "name=\"colorPrimary\"" app/src/main/res/values/colors.xml; then
-            sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' app/src/main/res/values/colors.xml
+        # 查找项目中所有的 colors.xml 文件
+        find . -name "colors.xml" -type f | while read -r colorfile; do
+          echo "🔧 处理文件: $colorfile"
+          # 检查是否缺少 colorPrimary
+          if ! grep -q "name=\"colorPrimary\"" "$colorfile"; then
+            echo "  添加 colorPrimary"
+            sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
           fi
-          if ! grep -q "name=\"colorPrimaryDark\"" app/src/main/res/values/colors.xml; then
-            sed -i '/<\/resources>/i\    <color name="colorPrimaryDark">#303F9F</color>' app/src/main/res/values/colors.xml
+          # 检查是否缺少 colorPrimaryDark
+          if ! grep -q "name=\"colorPrimaryDark\"" "$colorfile"; then
+            echo "  添加 colorPrimaryDark"
+            sed -i '/<\/resources>/i\    <color name="colorPrimaryDark">#303F9F</color>' "$colorfile"
           fi
-          if ! grep -q "name=\"colorAccent\"" app/src/main/res/values/colors.xml; then
-            sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' app/src/main/res/values/colors.xml
+          # 检查是否缺少 colorAccent
+          if ! grep -q "name=\"colorAccent\"" "$colorfile"; then
+            echo "  添加 colorAccent"
+            sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' "$colorfile"
           fi
-        else
-          echo "⚠️ colors.xml 不存在，跳过修补"
-        fi
-        # 开始编译
+          # 显示修改后的文件内容（调试）
+          echo "  修改后:"
+          cat "$colorfile" | grep -E "colorPrimary|colorPrimaryDark|colorAccent"
+        done
+
+    - name: 编译 Debug APK
+      run: |
         if [ -f gradlew ]; then
           ./gradlew assembleDebug --stacktrace
         else
