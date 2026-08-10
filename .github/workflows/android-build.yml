@@ -18,24 +18,31 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 清理旧文件并解压
+    - name: 清理旧文件并解压（自动搜索 zip）
       run: |
-        rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat
-        ZIP_FILE=$(ls legado-*.zip 2>/dev/null | head -n 1)
+        # 删除所有旧示例代码（包括 app 等）
+        rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat settings.gradle
+        # 在整个仓库中搜索 legado-*.zip（无论它在哪个子目录）
+        ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
         if [ -z "$ZIP_FILE" ]; then
           echo "❌ 未找到 legado-*.zip 文件！"
           exit 1
         fi
         echo "✅ 找到 zip 文件：$ZIP_FILE"
+        # 解压到当前根目录
         unzip -o "$ZIP_FILE"
-        EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "legado-*" | head -n 1)
+        # 如果解压出 legado-* 文件夹，把内容移到根目录
+        EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
         if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
           echo "✅ 发现解压文件夹：$EXTRACTED_DIR"
           shopt -s dotglob
           mv "$EXTRACTED_DIR"/* ./
           rm -rf "$EXTRACTED_DIR"
         fi
+        # 确保 gradlew 可执行
         chmod +x gradlew 2>/dev/null || echo "⚠️ gradlew 不存在"
+        # 显示根目录内容，便于调试
+        echo "=== 根目录内容 ==="
         ls -la
 
     - name: 编译 Debug APK
