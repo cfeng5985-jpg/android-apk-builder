@@ -18,9 +18,9 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 找到 zip → 复制到根目录 → 删旧文件 → 解压
+    - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件（跳过 .github）
       run: |
-        # 第一步：在整个仓库中搜索 legado-*.zip（先别删东西）
+        # 1. 找到 legado-*.zip
         ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
         if [ -z "$ZIP_FILE" ]; then
           echo "❌ 未找到 legado-*.zip 文件！"
@@ -28,27 +28,38 @@ jobs:
         fi
         echo "✅ 找到 zip 文件：$ZIP_FILE"
         
-        # 第二步：把 zip 复制到根目录（防止后面被删）
+        # 2. 复制到根目录
         cp "$ZIP_FILE" ./legado-src.zip
         
-        # 第三步：现在可以放心删除旧示例代码了（包括 app 文件夹）
+        # 3. 删除旧示例代码（确保根目录干净）
         rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat settings.gradle
         
-        # 第四步：解压刚才复制到根目录的 zip
+        # 4. 解压
         unzip -o legado-src.zip
         rm -f legado-src.zip
         
-        # 第五步：如果解压出 legado-* 文件夹，把内容移到根目录
+        # 5. 找到解压出来的 legado-* 文件夹
         EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
         if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
           echo "✅ 发现解压文件夹：$EXTRACTED_DIR"
+          # 移动内容到根目录，但跳过 .github 文件夹（避免覆盖 workflows）
           shopt -s dotglob
-          mv "$EXTRACTED_DIR"/* ./
+          for item in "$EXTRACTED_DIR"/*; do
+            basename=$(basename "$item")
+            # 跳过 .github 和 .git 文件夹
+            if [ "$basename" != ".github" ] && [ "$basename" != ".git" ]; then
+              mv "$item" ./
+            else
+              echo "⏭️ 跳过 $basename（保留现有）"
+            fi
+          done
           rm -rf "$EXTRACTED_DIR"
         fi
         
-        # 第六步：设置权限
+        # 6. 确保 gradlew 可执行
         chmod +x gradlew 2>/dev/null || echo "⚠️ gradlew 不存在"
+        
+        # 7. 显示根目录内容（调试）
         echo "=== 根目录内容 ==="
         ls -la
 
