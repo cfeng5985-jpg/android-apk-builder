@@ -3,6 +3,7 @@ name: Build Legado APK
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,16 +18,16 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 清理旧示例代码并解压你的源码
+    - name: 清理旧文件并解压你的源码
       run: |
-        # 删除仓库里原有的 wasishah33 示例代码（防止冲突）
-        rm -rf app gradle docs .github .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat
-        # 解压你上传的 legado-3.26081121.zip
+        # 删除 wasishah33 的旧示例代码（保留你的 zip）
+        rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat
+        # 解压你的 legado-3.26081121.zip
         unzip -o legado-3.26081121.zip
-        # 如果解压后多了一层同名文件夹，把里面的文件全部挪到根目录
-        if [ -d legado-3.26081121 ] && [ -f legado-3.26081121/gradlew ]; then
+        # 如果解压后多了一层同名文件夹，把内容移到根目录
+        if [ -d legado-3.26081121 ]; then
           mv legado-3.26081121/* ./
-          mv legado-3.26081121/.* ./ 2>/dev/null || true
+          rm -rf legado-3.26081121
         fi
         chmod +x gradlew
 
