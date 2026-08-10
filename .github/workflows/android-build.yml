@@ -18,18 +18,33 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 清理旧代码并解压你的源码
+    - name: 清理旧文件并解压你的源码
       run: |
-        rm -rf app gradle docs .github .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat
+        # 删除旧示例代码
+        rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat
+        # 解压你的 zip
         unzip -o legado-3.26081121.zip
-        if [ -d legado-3.26081121 ] && [ -f legado-3.26081121/gradlew ]; then
+        # 如果解压后多了一层同名文件夹，把内容移到根目录
+        if [ -d legado-3.26081121 ]; then
           mv legado-3.26081121/* ./
-          mv legado-3.26081121/.* ./ 2>/dev/null || true
+          rm -rf legado-3.26081121
         fi
-        chmod +x gradlew
+        chmod +x gradlew 2>/dev/null || true
+        # 【调试】显示当前根目录所有文件
+        echo "=== 当前根目录文件列表 ==="
+        ls -la
+        echo "=== 如果有 app 文件夹，显示其内容 ==="
+        if [ -d app ]; then ls -la app/; else echo "⚠️ app 文件夹不存在！"; fi
+        if [ -f gradlew ]; then echo "✅ gradlew 存在"; else echo "❌ gradlew 不存在"; fi
 
     - name: 编译 Debug APK
-      run: ./gradlew assembleDebug
+      run: |
+        if [ -f gradlew ]; then
+          ./gradlew assembleDebug
+        else
+          echo "❌ gradlew 不存在，编译终止"
+          exit 1
+        fi
 
     - name: 上传 APK
       uses: actions/upload-artifact@v4
