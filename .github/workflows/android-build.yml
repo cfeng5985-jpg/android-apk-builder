@@ -48,30 +48,32 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 全局修补缺失的颜色资源
+    - name: 修补缺失颜色资源 + 禁用R8优化 + 提升minSdk
       run: |
-        # 查找项目中所有的 colors.xml 文件
+        # 1. 修补所有 colors.xml
         find . -name "colors.xml" -type f | while read -r colorfile; do
-          echo "🔧 处理文件: $colorfile"
-          # 检查是否缺少 colorPrimary
+          echo "🔧 处理: $colorfile"
           if ! grep -q "name=\"colorPrimary\"" "$colorfile"; then
-            echo "  添加 colorPrimary"
             sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
           fi
-          # 检查是否缺少 colorPrimaryDark
           if ! grep -q "name=\"colorPrimaryDark\"" "$colorfile"; then
-            echo "  添加 colorPrimaryDark"
             sed -i '/<\/resources>/i\    <color name="colorPrimaryDark">#303F9F</color>' "$colorfile"
           fi
-          # 检查是否缺少 colorAccent
           if ! grep -q "name=\"colorAccent\"" "$colorfile"; then
-            echo "  添加 colorAccent"
             sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' "$colorfile"
           fi
-          # 显示修改后的文件内容（调试）
-          echo "  修改后:"
-          cat "$colorfile" | grep -E "colorPrimary|colorPrimaryDark|colorAccent"
         done
+
+        # 2. 禁用 R8 的 MethodHandle 检查（解决 MethodHandle.invoke 错误）
+        if [ -f gradle.properties ]; then
+          echo "android.enableR8=false" >> gradle.properties
+          echo "android.enableD8=false" >> gradle.properties
+        fi
+
+        # 3. 自动提升 minSdk 为 21（解决 MethodHandle 兼容性）
+        if [ -f app/build.gradle ]; then
+          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' app/build.gradle
+        fi
 
     - name: 编译 Debug APK
       run: |
