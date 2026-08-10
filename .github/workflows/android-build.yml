@@ -48,11 +48,10 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 修补缺失颜色资源 + 禁用R8优化 + 提升minSdk
+    - name: 修补缺失颜色 + 提升 minSdk + 启用 Desugaring
       run: |
-        # 1. 修补所有 colors.xml
+        # 1. 修补缺失的颜色
         find . -name "colors.xml" -type f | while read -r colorfile; do
-          echo "🔧 处理: $colorfile"
           if ! grep -q "name=\"colorPrimary\"" "$colorfile"; then
             sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
           fi
@@ -64,21 +63,29 @@ jobs:
           fi
         done
 
-        # 2. 禁用 R8 的 MethodHandle 检查（解决 MethodHandle.invoke 错误）
-        if [ -f gradle.properties ]; then
-          echo "android.enableR8=false" >> gradle.properties
-          echo "android.enableD8=false" >> gradle.properties
-        fi
+        # 2. 修改 gradle.properties（已删除会导致 AGP 8.x 崩溃的废弃配置 android.enableR8 / android.enableD8）
+        # if [ -f gradle.properties ]; then
+        #   echo "android.enableR8=false" >> gradle.properties
+        #   echo "android.enableD8=false" >> gradle.properties
+        # fi
 
-        # 3. 自动提升 minSdk 为 21（解决 MethodHandle 兼容性）
+        # 3. 修改 app/build.gradle：提升 minSdk + 添加 desugaring
         if [ -f app/build.gradle ]; then
           sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' app/build.gradle
+          # 在 android { compileOptions { 中添加 coreLibraryDesugaringEnabled
+          if ! grep -q "coreLibraryDesugaringEnabled" app/build.gradle; then
+            sed -i '/compileOptions {/a\        coreLibraryDesugaringEnabled true' app/build.gradle
+          fi
+          # 在 dependencies 中添加 desugaring 依赖
+          if ! grep -q "desugar_jdk_libs" app/build.gradle; then
+            sed -i '/dependencies {/a\    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.2.3"' app/build.gradle
+          fi
         fi
 
     - name: 编译 Debug APK
       run: |
         if [ -f gradlew ]; then
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace --info
         else
           echo "❌ gradlew 不存在，退出"
           exit 1
