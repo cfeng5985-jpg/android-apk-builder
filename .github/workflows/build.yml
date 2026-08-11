@@ -1,0 +1,115 @@
+name: Build Legado APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件（跳过 .github）
+      run: |
+        ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
+        if [ -z "$ZIP_FILE" ]; then
+          echo "❌ 未找到 legado-*.zip 文件！"
+          exit 1
+        fi
+        echo "✅ 找到 zip 文件：$ZIP_FILE"
+        cp "$ZIP_FILE" ./legado-src.zip
+        rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat settings.gradle
+        unzip -o legado-src.zip
+        rm -f legado-src.zip
+        EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
+        if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
+          echo "✅ 发现解压文件夹：$EXTRACTED_DIR"
+          shopt -s dotglob
+          for item in "$EXTRACTED_DIR"/*; do
+            basename=$(basename "$item")
+            if [ "$basename" != ".github" ] && [ "$basename" != ".git" ]; then
+              mv "$item" ./
+            else
+              echo "⏭️ 跳过 $basename"
+            fi
+          done
+          rm -rf "$EXTRACTED_DIR"
+        fi
+        chmod +x gradlew 2>/dev/null || echo "⚠️ gradlew 不存在"
+        echo "=== 根目录内容 ==="
+        ls -la
+
+    - name: 修补缺失颜色 + 配置高内存 + 开启 Multidex 与 Desugaring
+      run: |
+        # 1. 修补缺失的颜色资源
+        find . -name "colors.xml" -type f | while read -r colorfile; do
+          if ! grep -q "name=\"colorPrimary\"" "$colorfile"; then
+            sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
+          fi
+          if ! grep -q "name=\"colorPrimaryDark\"" "$colorfile"; then
+            sed -i '/<\/resources>/i\    <color name="colorPrimaryDark">#303F9F</color>' "$colorfile"
+          fi
+          if ! grep -q "name=\"colorAccent\"" "$colorfile"; then
+            sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' "$colorfile"
+          fi
+        done
+
+        # 2. 配置更高内存（防止 OOM 崩溃）
+        if [ -f gradle.properties ]; then
+          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
+        fi
+
+        # 3. 修改 app/build.gradle：提升 minSdk、开启 Multidex、启用 Desugaring
+        if [ -f app/build.gradle ]; then
+          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' app/build.gradle
+          
+          if ! grep -q "multiDexEnabled" app/build.gradle; then
+            sed -i '/defaultConfig {/a\        multiDexEnabled true' app/build.gradle
+          fi
+          
+          if ! grep -q "coreLibraryDesugaringEnabled" app/build.gradle; then
+            sed -i '/compileOptions {/a\        coreLibraryDesugaringEnabled true' app/build.gradle
+          fi
+          
+          if ! grep -q "desugar_jdk_libs" app/build.gradle; then
+            sed -i '/dependencies {/a\    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.2.3"' app/build.gradle
+          fi
+        fi
+
+    - name: 编译 Debug APK（同时输出日志文件）
+      run: |
+        if [ -f gradlew ]; then
+          set +e
+          ./gradlew assembleDebug > build.log 2>&1
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "❌ 编译失败了！你可以到页面底部下载 'build-log-txt'，里面包含完整的报错日志。"
+            exit $EXIT_CODE
+          fi
+        else
+          echo "❌ gradlew 不存在，退出"
+          exit 1
+        fi
+
+    - name: 上传编译日志（失败也能下载）
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log-txt
+        path: build.log
+
+    - name: 上传 APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: legado-debug-apk
+        path: app/build/outputs/apk/debug/*.apk
