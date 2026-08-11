@@ -18,7 +18,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件（跳过 .github）
+    - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件
       run: |
         ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
         if [ -z "$ZIP_FILE" ]; then
@@ -48,7 +48,7 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 修补缺失颜色 + 配置高内存 + 开启 Multidex 与 Desugaring + 强制全网提升 minSdk 至 26
+    - name: 修补缺失颜色、内存，终极强制修改 minSdk 为 26
       run: |
         # 1. 修补缺失的颜色资源
         find . -name "colors.xml" -type f | while read -r colorfile; do
@@ -63,16 +63,21 @@ jobs:
           fi
         done
 
-        # 2. 配置更高内存（防止 OOM 崩溃）
+        # 2. 配置更高内存
         if [ -f gradle.properties ]; then
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
         fi
 
-        # 3. 【终极双保险修复】精确扫描并硬改所有 build.gradle 的 21 和 23，强制升为 26
+        # 3. 【终极保险】全网精确查找并替换所有可能写法的 minSdk
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 23/minSdkVersion 26/g' {} \;
+        find . -name "build.gradle" -exec sed -i 's/minSdk 23/minSdk 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 21/minSdkVersion 26/g' {} \;
+        find . -name "build.gradle" -exec sed -i 's/minSdk 21/minSdk 26/g' {} \;
 
-        # 4. 开启 Multidex、启用 Desugaring
+        # 4. 【绝对防御】在 app/build.gradle 最末尾追加强制覆盖代码（无论前面写了什么，末尾这行都生效）
+        echo "android.defaultConfig.minSdkVersion 26" >> app/build.gradle
+
+        # 5. 开启 Multidex、启用 Desugaring
         if [ -f app/build.gradle ]; then
           if ! grep -q "multiDexEnabled" app/build.gradle; then
             sed -i '/defaultConfig {/a\        multiDexEnabled true' app/build.gradle
@@ -85,7 +90,7 @@ jobs:
           fi
         fi
 
-    - name: 编译 Debug APK（同时输出日志文件）
+    - name: 编译 Debug APK
       run: |
         if [ -f gradlew ]; then
           set +e
@@ -101,7 +106,7 @@ jobs:
           exit 1
         fi
 
-    - name: 上传编译日志（失败也能下载）
+    - name: 上传编译日志
       if: always()
       uses: actions/upload-artifact@v4
       with:
