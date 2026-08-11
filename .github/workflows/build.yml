@@ -48,7 +48,7 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 修补缺失颜色 + 配置高内存 + 开启 Multidex 与 Desugaring
+    - name: 修补缺失颜色 + 配置高内存 + 开启 Multidex 与 Desugaring + 全局升级 minSdk 至 26
       run: |
         # 1. 修补缺失的颜色资源
         find . -name "colors.xml" -type f | while read -r colorfile; do
@@ -68,18 +68,17 @@ jobs:
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
         fi
 
-        # 3. 修改 app/build.gradle：提升 minSdk、开启 Multidex、启用 Desugaring
+        # 3. 【修复核心】全局搜索所有 build.gradle，强制将 minSdkVersion 修改为 26
+        find . -name "build.gradle" -exec sed -i 's/minSdkVersion [0-9]*/minSdkVersion 26/g' {} \;
+
+        # 4. 开启 Multidex、启用 Desugaring
         if [ -f app/build.gradle ]; then
-          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 26/g' app/build.gradle
-          
           if ! grep -q "multiDexEnabled" app/build.gradle; then
             sed -i '/defaultConfig {/a\        multiDexEnabled true' app/build.gradle
           fi
-          
           if ! grep -q "coreLibraryDesugaringEnabled" app/build.gradle; then
             sed -i '/compileOptions {/a\        coreLibraryDesugaringEnabled true' app/build.gradle
           fi
-          
           if ! grep -q "desugar_jdk_libs" app/build.gradle; then
             sed -i '/dependencies {/a\    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.2.3"' app/build.gradle
           fi
