@@ -68,13 +68,13 @@ jobs:
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
         fi
 
-        # 3. 【终极保险】全网精确查找并替换所有可能写法的 minSdk
+        # 3. 全网精确查找并替换所有可能写法的 minSdk
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 23/minSdkVersion 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdk 23/minSdk 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 21/minSdkVersion 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdk 21/minSdk 26/g' {} \;
 
-        # 4. 【绝对防御】在 app/build.gradle 最末尾追加强制覆盖代码（无论前面写了什么，末尾这行都生效）
+        # 4. 在 app/build.gradle 最末尾追加强制覆盖代码
         echo "android.defaultConfig.minSdkVersion 26" >> app/build.gradle
 
         # 5. 开启 Multidex、启用 Desugaring
@@ -113,8 +113,32 @@ jobs:
         name: build-log-txt
         path: build.log
 
+    # ===== 下面是修复 APK 找不到 + 吐出源码包 =====
+
+    - name: 查找并定位 APK 文件
+      run: |
+        APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+        if [ -n "$APK_FILE" ]; then
+          echo "✅ 成功找到 APK 文件：$APK_FILE"
+          mkdir -p app/build/outputs/apk/debug
+          cp "$APK_FILE" app/build/outputs/apk/debug/legado-build.apk
+        else
+          echo "❌ 找不到 APK 文件！"
+          exit 1
+        fi
+
     - name: 上传 APK
       uses: actions/upload-artifact@v4
       with:
         name: legado-debug-apk
-        path: app/build/outputs/apk/debug/*.apk
+        path: app/build/outputs/apk/debug/legado-build.apk
+
+    - name: 打包修改好的纯净源码
+      run: |
+        zip -r modified-sources.zip . -x "*.git*" -x ".github/*" -x "*.zip"
+
+    - name: 上传修改后的源码包
+      uses: actions/upload-artifact@v4
+      with:
+        name: legado-modified-sources
+        path: modified-sources.zip
