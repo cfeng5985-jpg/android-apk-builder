@@ -48,7 +48,7 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 修补缺失颜色 + 配置高内存 + 开启 Multidex 与 Desugaring + 全局升级 minSdk 至 26
+    - name: 修补缺失颜色 + 配置高内存 + 开启 Multidex 与 Desugaring + 强制全网提升 minSdk 至 26
       run: |
         # 1. 修补缺失的颜色资源
         find . -name "colors.xml" -type f | while read -r colorfile; do
@@ -68,8 +68,9 @@ jobs:
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
         fi
 
-        # 3. 【修复核心】全局搜索所有 build.gradle，强制将 minSdkVersion 修改为 26
-        find . -name "build.gradle" -exec sed -i 's/minSdkVersion [0-9]*/minSdkVersion 26/g' {} \;
+        # 3. 【终极双保险修复】精确扫描并硬改所有 build.gradle 的 21 和 23，强制升为 26
+        find . -name "build.gradle" -exec sed -i 's/minSdkVersion 23/minSdkVersion 26/g' {} \;
+        find . -name "build.gradle" -exec sed -i 's/minSdkVersion 21/minSdkVersion 26/g' {} \;
 
         # 4. 开启 Multidex、启用 Desugaring
         if [ -f app/build.gradle ]; then
