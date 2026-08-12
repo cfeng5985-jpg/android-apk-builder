@@ -92,16 +92,18 @@ jobs:
 
         # 6. ✨ 只针对 Release 正式包强制开启代码混淆和资源压缩（真正瘦身到 10-15MB）
         sed -i 's/minifyEnabled false/minifyEnabled true/g' app/build.gradle
-        # 兼容有些 build.gradle 没写 shrinkResources false 的情况，单独追加
         sed -i '/release {/a\            shrinkResources true' app/build.gradle
 
         # ==========================================
-        # 👇 2026-08-13 修复兜底（最关键的两步）
+        # 👇 2026-08-13 完美缝合修复
         # ==========================================
-        # 🔧 修正 Material 版本号为 1.11.0 (完美兼容两个缺失API)
-        sed -i 's/material = "1.9.0"/material = "1.11.0"/g' gradle/libs.versions.toml
+        # 1. 锁定 Material 1.12.0（同时解决 isDraggableOnNestedScroll 报错）
+        sed -i 's/material = "1.9.0"/material = "1.12.0"/g' gradle/libs.versions.toml
 
-        # 🔧 防 Material 组件崩溃（强制追加混淆规则）
+        # 2. 自动把 WallpaperTheme.kt 里的 MaterialDynamicColors() 改成 getInstance()，解决 1.12.0 私有构造函数报错！
+        find app -name "WallpaperTheme.kt" -exec sed -i 's/MaterialDynamicColors()/MaterialDynamicColors.getInstance()/g' {} \;
+
+        # 3. 防 Material 组件崩溃（强制追加混淆规则）
         echo "" >> proguard-rules.pro
         echo "# 强制追加防 Material 混淆" >> proguard-rules.pro
         echo "-keep class com.google.android.material.** {*;}" >> proguard-rules.pro
@@ -111,9 +113,7 @@ jobs:
       run: |
         if [ -f gradlew ]; then
           set +e
-          # 清理可能产生的任何缓存
           ./gradlew clean
-          # ⭐ 重点：编译 Release 包才能开启混淆瘦身，生成 10-15MB 的包！
           ./gradlew assembleRelease > build.log 2>&1
           EXIT_CODE=$?
           set -e
