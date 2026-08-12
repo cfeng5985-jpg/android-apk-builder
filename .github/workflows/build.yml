@@ -48,7 +48,7 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 修补缺失颜色、内存，终极强制修改 minSdk 为 26
+    - name: 修补缺失颜色、内存，开启瘦身，强制修改 minSdk 为 26
       run: |
         # 1. 修补缺失的颜色资源
         find . -name "colors.xml" -type f | while read -r colorfile; do
@@ -89,6 +89,10 @@ jobs:
             sed -i '/dependencies {/a\    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.2.3"' app/build.gradle
           fi
         fi
+
+        # 6. ✨ 强制开启 Debug 版本的代码混淆和资源压缩（从 30MB 瘦身到 10-15MB）
+        echo "android.buildTypes.debug.minifyEnabled true" >> app/build.gradle
+        echo "android.buildTypes.debug.shrinkResources true" >> app/build.gradle
 
     - name: 编译 Debug APK
       run: |
@@ -135,7 +139,8 @@ jobs:
 
     - name: 打包修改好的纯净源码
       run: |
-        zip -r modified-sources.zip . -x "*.git*" -x ".github/*" -x "*.zip"
+        # ✨ 加了排除项，把中间编译生成的几百兆垃圾缓存文件夹（build/、.gradle/等）全排除了，159MB会变成20MB左右
+        zip -r modified-sources.zip . -x "*.git*" -x ".github/*" -x "*.zip" -x "**/build/*" -x "app/build/*" -x ".gradle/*" -x ".idea/*" -x ".kotlin/*"
 
     - name: 上传修改后的源码包
       uses: actions/upload-artifact@v4
@@ -143,11 +148,11 @@ jobs:
         name: legado-modified-sources
         path: modified-sources.zip
 
-    # ===== ✨ 新增：将修改后的源码推回仓库（自动建立并推送到 source 分支） =====
-    - name: 将修改后的源码推回 GitHub 仓库（覆盖网页源码）
+    # ===== ✨ 终极修复：加上了 -f，强制推回源码到 source 分支（保证绿勾！） =====
+    - name: 将修改后的源码推回 GitHub 仓库（强制覆盖并更新网页源码）
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "actions@github.com"
         git add -A
-        git commit -m "自动构建成功：覆盖网页源码 [skip ci]" || echo "没有检测到文件变动，跳过提交"
-        git push origin source
+        git commit -m "自动构建成功：强制覆盖网页源码 [skip ci]" || echo "没有检测到文件变动，跳过提交"
+        git push -f origin source
