@@ -1,3 +1,4 @@
+
 name: Build Legado APK
 
 on:
@@ -18,8 +19,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    # 1. 只找包，解压，然后“进入”这个目录
-    - name: 找到并解压源码包，进入工作目录
+    - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件（保持你原来的原逻辑）
       run: |
         ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
         if [ -z "$ZIP_FILE" ]; then
@@ -27,17 +27,28 @@ jobs:
           exit 1
         fi
         echo "✅ 找到 zip 文件：$ZIP_FILE"
-        unzip -o "$ZIP_FILE" -d ./
+        cp "$ZIP_FILE" ./legado-src.zip
+        rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat settings.gradle
+        unzip -o legado-src.zip
+        rm -f legado-src.zip
         EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
-        if [ -z "$EXTRACTED_DIR" ]; then
-           echo "❌ 解压后未找到源码目录！"
-           exit 1
+        if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
+          echo "✅ 发现解压文件夹：$EXTRACTED_DIR"
+          shopt -s dotglob
+          for item in "$EXTRACTED_DIR"/*; do
+            basename=$(basename "$item")
+            if [ "$basename" != ".github" ] && [ "$basename" != ".git" ]; then
+              mv "$item" ./
+            else
+              echo "⏭️ 跳过 $basename"
+            fi
+          done
+          rm -rf "$EXTRACTED_DIR"
         fi
-        echo "✅ 进入源码目录：$EXTRACTED_DIR"
-        cd "$EXTRACTED_DIR"
-        chmod +x gradlew
+        chmod +x gradlew 2>/dev/null || echo "⚠️ gradlew 不存在"
+        echo "=== 根目录内容 ==="
+        ls -la
 
-    # 2. 这里完整保留了你所有的“修补、配置内存、瘦身”代码（完全没动）
     - name: 修补缺失颜色、内存，开启瘦身，强制修改 minSdk 为 26
       run: |
         # 1. 修补缺失的颜色资源
@@ -80,26 +91,38 @@ jobs:
           fi
         fi
 
-        # 6. ✨ 强制开启 Debug 版本的代码混淆和资源压缩（关键瘦身配置，没动你的）
+        # 6. ✨ 强制开启 Debug 版本的代码混淆和资源压缩（瘦身配置）
         echo "android.buildTypes.debug.minifyEnabled true" >> app/build.gradle
         echo "android.buildTypes.debug.shrinkResources true" >> app/build.gradle
-        
-        # 7. 注入 Material 防混淆规则（防止开启瘦身导致 MaterialButton 崩溃）
+
+        # ==========================================
+        # 👇 2026-08-13 新增兜底：无论你上传的包是啥样，都强制覆盖
+        # ==========================================
+        # 🔧 修正 Material 版本号
+        sed -i 's/material = "1.9.0"/material = "1.12.0"/g' gradle/libs.versions.toml
+
+        # 🔧 防 Material 组件崩溃（强制追加混淆规则，不再依赖你包里是否已经写了）
         echo "" >> proguard-rules.pro
-        echo "# 自动注入防 Material 混淆" >> proguard-rules.pro
+        echo "# 强制追加防 Material 混淆（防止崩溃）" >> proguard-rules.pro
         echo "-keep class com.google.android.material.** {*;}" >> proguard-rules.pro
         echo "-dontwarn com.google.android.material.**" >> proguard-rules.pro
 
-    # 3. 此时已经处于源码目录内，只需去除路径依赖执行命令即可
     - name: 编译 Debug APK
       run: |
-        ./gradlew clean
-        ./gradlew assembleDebug > ../build.log 2>&1
-        EXIT_CODE=$?
-        set -e
-        if [ $EXIT_CODE -ne 0 ]; then
-          echo "❌ 编译失败了！你可以到页面底部下载 'build-log-txt'。"
-          exit $EXIT_CODE
+        if [ -f gradlew ]; then
+          set +e
+          # 清理缓存，确保依赖最新
+          ./gradlew clean
+          ./gradlew assembleDebug > build.log 2>&1
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "❌ 编译失败了！你可以到页面底部下载 'build-log-txt'，里面包含完整的报错日志。"
+            exit $EXIT_CODE
+          fi
+        else
+          echo "❌ gradlew 不存在，退出"
+          exit 1
         fi
 
     - name: 上传编译日志
@@ -107,9 +130,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build-log-txt
-        path: build.log  # 因为日志在前面写到了上一级，所以这里是 ../build.log？嗯这里有点歧义，我会在YML里确保路径一致。
+        path: build.log
 
-    # 4. 查找产出物（直接在内部找）
     - name: 查找并定位 APK 文件
       run: |
         APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
@@ -130,18 +152,16 @@ jobs:
 
     - name: 打包修改好的纯净源码
       run: |
-        zip -r ../modified-sources.zip . -x "*.git*" -x ".github/*" -x "*.zip" -x "**/build/*" -x "app/build/*" -x ".gradle/*" -x ".idea/*" -x ".kotlin/*"
+        zip -r modified-sources.zip . -x "*.git*" -x ".github/*" -x "*.zip" -x "**/build/*" -x "app/build/*" -x ".gradle/*" -x ".idea/*" -x ".kotlin/*"
 
     - name: 上传修改后的源码包
       uses: actions/upload-artifact@v4
       with:
         name: legado-modified-sources
-        path: ../modified-sources.zip
+        path: modified-sources.zip
 
-    # 5. 推回源码（同样需要切出源码目录再推）
-    - name: 将修改后的源码推回 GitHub 仓库
+    - name: 将修改后的源码推回 GitHub 仓库（强制覆盖并更新网页源码）
       run: |
-        cd ..
         git config --global user.name "github-actions[bot]"
         git config --global user.email "actions@github.com"
         git add -A
