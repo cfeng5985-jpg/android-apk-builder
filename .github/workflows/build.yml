@@ -22,7 +22,6 @@ jobs:
 
     - name: 修补缺失颜色、内存，强制 minSdk 26
       run: |
-        # 1. 修补缺失的颜色资源
         find . -name "colors.xml" -type f | while read -r colorfile; do
           if ! grep -q "name=\"colorPrimary\"" "$colorfile"; then
             sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
@@ -34,18 +33,18 @@ jobs:
             sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' "$colorfile"
           fi
         done
-        # 2. 配置更高gradle内存
+
         if [ -f gradle.properties ]; then
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
         fi
-        # 3. 统一替换minSdk为26
+
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 23/minSdkVersion 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdk 23/minSdk 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 21/minSdkVersion 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdk 21/minSdk 26/g' {} \;
-        # 兜底强制minSdk
+
         echo "android.defaultConfig.minSdkVersion 26" >> app/build.gradle
-        # 4. 开启multidex与desugar
+
         if [ -f app/build.gradle ]; then
           if ! grep -q "multiDexEnabled" app/build.gradle; then
             sed -i '/defaultConfig {/a\        multiDexEnabled true' app/build.gradle
@@ -65,7 +64,7 @@ jobs:
         EXIT_CODE=$?
         set -e
         if [ $EXIT_CODE -ne 0 ]; then
-          echo "❌ 编译失败，下载 build-log-txt 查看完整报错"
+          echo "编译失败，下载 build-log-txt 查看完整报错"
           exit $EXIT_CODE
         fi
 
@@ -80,7 +79,7 @@ jobs:
       run: |
         APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
         if [ -z "$APK_FILE" ]; then
-          echo "❌ 未生成APK文件"
+          echo "未生成APK文件"
           exit 1
         fi
         mkdir -p app/build/outputs/apk/debug
@@ -104,3 +103,4 @@ jobs:
       with:
         name: legado-modified-sources
         path: modified-sources.zip
+
