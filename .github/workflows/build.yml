@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
-# 添加写入权限，解决推不回仓库的问题
+# 添加写入权限
 permissions:
   contents: write
 
@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 直接把网页上改好的代码拉到云端
     - uses: actions/checkout@v4
 
     - name: Set up JDK 17
@@ -22,40 +23,12 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件
-      run: |
-        # 直接告诉它包名叫什么，不用它自己猜
-        ZIP_FILE="legado-3.26080821.zip"
-        if [ -z "$ZIP_FILE" ]; then
-          echo "❌ 未找到 legado-*.zip 文件！"
-          exit 1
-        fi
-        echo "✅ 找到 zip 文件：$ZIP_FILE"
-        cp "$ZIP_FILE" ./legado-src.zip
-        rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat settings.gradle
-        unzip -o legado-src.zip
-        rm -f legado-src.zip
-        EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
-        if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
-          echo "✅ 发现解压文件夹：$EXTRACTED_DIR"
-          shopt -s dotglob
-          for item in "$EXTRACTED_DIR"/*; do
-            basename=$(basename "$item")
-            if [ "$basename" != ".github" ] && [ "$basename" != ".git" ]; then
-              mv "$item" ./
-            else
-              echo "⏭️ 跳过 $basename"
-            fi
-          done
-          rm -rf "$EXTRACTED_DIR"
-        fi
-        chmod +x gradlew 2>/dev/null || echo "⚠️ gradlew 不存在"
-        echo "=== 根目录内容 ==="
-        ls -la
+    # 这一步纯粹是为了确认云端到底有没有代码
+    - name: 检查云端根目录文件
+      run: ls -la
 
     - name: 修补缺失颜色、内存，配置 Release 版混淆，强制修改 minSdk 为 26
       run: |
-        # 1. 修补缺失的颜色资源
         find . -name "colors.xml" -type f | while read -r colorfile; do
           if ! grep -q "name=\"colorPrimary\"" "$colorfile"; then
             sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
@@ -68,21 +41,16 @@ jobs:
           fi
         done
 
-        # 2. 配置更高内存
         if [ -f gradle.properties ]; then
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
         fi
 
-        # 3. 全网精确查找并替换所有可能写法的 minSdk 为 26
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 23/minSdkVersion 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdk 23/minSdk 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 21/minSdkVersion 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdk 21/minSdk 26/g' {} \;
-
-        # 4. 在 app/build.gradle 最末尾追加强制覆盖 minSdk
         echo "android.defaultConfig.minSdkVersion 26" >> app/build.gradle
 
-        # 5. 开启 Multidex、启用 Desugaring
         if [ -f app/build.gradle ]; then
           if ! grep -q "multiDexEnabled" app/build.gradle; then
             sed -i '/defaultConfig {/a\        multiDexEnabled true' app/build.gradle
@@ -95,7 +63,6 @@ jobs:
           fi
         fi
 
-        # 6. ✨ 只针对 Release 正式包强制开启代码混淆和资源压缩
         sed -i 's/minifyEnabled false/minifyEnabled true/g' app/build.gradle
         sed -i '/release {/a\            shrinkResources true' app/build.gradle
 
@@ -140,13 +107,3 @@ jobs:
       with:
         name: legado-debug-apk
         path: app/build/outputs/apk/debug/legado-build.apk
-
-    - name: 打包修改好的纯净源码 (使用最高压缩率 -9，保持 9MB 左右)
-      run: |
-        zip -r -9 modified-sources.zip . -x "*.git*" -x ".github/*" -x "*.zip" -x "**/build/*" -x "app/build/*" -x ".gradle/*" -x ".idea/*" -x ".kotlin/*"
-
-    - name: 上传修改后的源码包
-      uses: actions/upload-artifact@v4
-      with:
-        name: legado-modified-sources
-        path: modified-sources.zip
