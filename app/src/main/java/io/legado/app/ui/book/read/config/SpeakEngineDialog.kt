@@ -198,26 +198,22 @@ class SpeakEngineDialog() : BaseDialogFragment(R.layout.dialog_recycler_view),
     }
 
     // ==========================================
-    // 【修改点】这里就是你替换的完整 onMenuItemClick
+    // 【最终版】这里是你需要替换的完整 onMenuItemClick
     // ==========================================
     override fun onMenuItemClick(item: MenuItem?): Boolean {
         when (item?.itemId) {
             R.id.menu_clear -> clearCache()
             R.id.menu_add -> showDialogFragment<HttpTtsEditDialog>()
 
-            // 【关键新增】拦截你自己的第二个加号 (menu_add_advanced)
+            // 【你的第二个加号】
             R.id.menu_add_advanced -> {
                 try {
-                    // 1. 准备弹出配置窗口
                     val builder = android.app.AlertDialog.Builder(requireContext())
                     builder.setTitle("高级引擎配置")
-
-                    // 2. 加载你画好的 XML 布局
                     val view = android.view.LayoutInflater.from(requireContext())
                         .inflate(R.layout.dialog_advanced_engine, null)
                     builder.setView(view)
 
-                    // 3. 设置【保存】按钮的点击逻辑
                     builder.setPositiveButton("保存") { _, _ ->
                         val etName = view.findViewById<android.widget.EditText>(R.id.et_engine_name)
                         val etInterval = view.findViewById<android.widget.EditText>(R.id.et_paragraph_interval)
@@ -229,37 +225,41 @@ class SpeakEngineDialog() : BaseDialogFragment(R.layout.dialog_recycler_view),
                         val useWebSocket = rgMode.checkedRadioButtonId == R.id.rb_websocket
                         val preRequestsJson = etPreRequests.text.toString()
 
-                        // 4. 实例化之前你建好的 AdvancedTtsConfig 数据类
-                        val newConfig = AdvancedTtsConfig(
-                            name = name,
-                            interval = interval,
-                            useWebSocket = useWebSocket,
-                            preRequests = preRequestsJson
+                        // 1. 把你的高级配置打包成 JSON 字符串，存到原版 ttsParams 字段里
+                        val customConfig = mapOf(
+                            "interval" to interval,
+                            "useWebSocket" to useWebSocket,
+                            "preRequests" to preRequestsJson
                         )
+                        val configJson = GSON.toJson(customConfig)
 
-                        // 5. 手机弹窗确认保存成功
-                        android.widget.Toast.makeText(
-                            requireContext(),
-                            "成功保存引擎配置：${newConfig.name}，当前模式：" + if(newConfig.useWebSocket) "WebSocket" else "HTTP",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
+                        // 2. 实例化原版数据库实体 HttpTTS
+                        val tts = io.legado.app.data.entities.HttpTTS().apply {
+                            this.name = name
+                            this.ttsParams = configJson
+                            this.concurrentRate = 1
+                            this.url = "ws://custom-advanced-engine" // 占位，防止校验报错
+                        }
+
+                        // 3. 【关键插入】：写入原版数据库
+                        appDb.httpTTSDao.insert(tts)
+
+                        // 4. 【关键刷新】：重新加载下方的引擎列表（你的引擎立刻就会出现）
+                        initData()
+
+                        // 5. 关窗并提示
+                        dismissAllowingStateLoss()
+                        android.widget.Toast.makeText(requireContext(), "高级引擎「$name」已成功添加！", android.widget.Toast.LENGTH_LONG).show()
                     }
 
-                    // 6. 设置【取消】按钮
                     builder.setNegativeButton("取消", null)
                     builder.setCancelable(true)
                     builder.show()
                 } catch (e: Exception) {
-                    // 异常兜底：就算写崩了也只会弹红字，绝不会弄废原来底部的引擎列表！
-                    android.widget.Toast.makeText(
-                        requireContext(),
-                        "高级面板启动失败：${e.message}",
-                        android.widget.Toast.LENGTH_LONG
-                    ).show()
+                    android.widget.Toast.makeText(requireContext(), "高级面板启动失败：${e.message}", android.widget.Toast.LENGTH_LONG).show()
                 }
                 return true
             }
-            // ==========================================
 
             R.id.menu_default -> viewModel.importDefault()
             R.id.menu_import_local -> importDocResult.launch {
