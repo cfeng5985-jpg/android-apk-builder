@@ -48,9 +48,9 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 终极修补：颜色、内存、主题、混淆 (不再降级，解决崩溃和瘦身)
+    - name: 修补缺失颜色、内存，配置 Release 版混淆，强制修改 minSdk 为 26
       run: |
-        # 1. 补齐旧版 + Material 3 全部颜色，防止界面崩溃
+        # 1. 修补缺失的颜色资源
         find . -name "colors.xml" -type f | while read -r colorfile; do
           if ! grep -q "name=\"colorPrimary\"" "$colorfile"; then
             sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
@@ -61,32 +61,23 @@ jobs:
           if ! grep -q "name=\"colorAccent\"" "$colorfile"; then
             sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' "$colorfile"
           fi
-          if ! grep -q "name=\"colorPrimaryVariant\"" "$colorfile"; then
-            sed -i '/<\/resources>/i\    <color name="colorPrimaryVariant">#3949AB</color>' "$colorfile"
-          fi
-          if ! grep -q "name=\"colorSecondary\"" "$colorfile"; then
-            sed -i '/<\/resources>/i\    <color name="colorSecondary">#FF4081</color>' "$colorfile"
-          fi
-          if ! grep -q "name=\"colorSecondaryVariant\"" "$colorfile"; then
-            sed -i '/<\/resources>/i\    <color name="colorSecondaryVariant">#F50057</color>' "$colorfile"
-          fi
-          if ! grep -q "name=\"colorSurface\"" "$colorfile"; then
-            sed -i '/<\/resources>/i\    <color name="colorSurface">#FFFFFF</color>' "$colorfile"
-          fi
-          if ! grep -q "name=\"colorOnPrimary\"" "$colorfile"; then
-            sed -i '/<\/resources>/i\    <color name="colorOnPrimary">#FFFFFF</color>' "$colorfile"
-          fi
-          if ! grep -q "name=\"colorOnSecondary\"" "$colorfile"; then
-            sed -i '/<\/resources>/i\    <color name="colorOnSecondary">#000000</color>' "$colorfile"
-          fi
         done
 
-        # 2. 增加内存
+        # 2. 配置更高内存
         if [ -f gradle.properties ]; then
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
         fi
 
-        # 3. 开启 Multidex、启用 Desugaring
+        # 3. 全网精确查找并替换所有可能写法的 minSdk 为 26
+        find . -name "build.gradle" -exec sed -i 's/minSdkVersion 23/minSdkVersion 26/g' {} \;
+        find . -name "build.gradle" -exec sed -i 's/minSdk 23/minSdk 26/g' {} \;
+        find . -name "build.gradle" -exec sed -i 's/minSdkVersion 21/minSdkVersion 26/g' {} \;
+        find . -name "build.gradle" -exec sed -i 's/minSdk 21/minSdk 26/g' {} \;
+
+        # 4. 在 app/build.gradle 最末尾追加强制覆盖 minSdk
+        echo "android.defaultConfig.minSdkVersion 26" >> app/build.gradle
+
+        # 5. 开启 Multidex、启用 Desugaring
         if [ -f app/build.gradle ]; then
           if ! grep -q "multiDexEnabled" app/build.gradle; then
             sed -i '/defaultConfig {/a\        multiDexEnabled true' app/build.gradle
@@ -99,15 +90,27 @@ jobs:
           fi
         fi
 
-        # 4. 锁定 Material 1.12.0 库版本
-        sed -i 's/material = "1.9.0"/material = "1.12.0"/g' gradle/libs.versions.toml
-
-        # 5. 把 App 主题强制从 AppCompat 换成 MaterialComponents，彻底解决 MaterialButton 闪退
-        find app/src/main/res/values -type f \( -name "themes.xml" -o -name "styles.xml" \) -exec sed -i 's/parent="Theme.AppCompat/parent="Theme.MaterialComponents/g' {} \;
-
-        # 6. 开启 Release 混淆和资源压缩，把 APK 瘦身到 10-15MB
+        # 6. ✨ 只针对 Release 正式包强制开启代码混淆和资源压缩
         sed -i 's/minifyEnabled false/minifyEnabled true/g' app/build.gradle
         sed -i '/release {/a\            shrinkResources true' app/build.gradle
+
+        # ==========================================
+        # 👇 2026-08-13 完美缝合修复
+        # ==========================================
+        # 1. 锁定 Material 1.12.0
+        sed -i 's/material = "1.9.0"/material = "1.12.0"/g' gradle/libs.versions.toml
+
+        # 2. 自动把 WallpaperTheme.kt 里的 MaterialDynamicColors() 改成 getInstance()
+        find app -name "WallpaperTheme.kt" -exec sed -i 's/MaterialDynamicColors()/MaterialDynamicColors.getInstance()/g' {} \;
+
+        # 3. 💡【核心新增修复】把 BottomWebViewDialog.kt 里的旧属性替换成新版本支持的属性，解决报错
+        find app -name "BottomWebViewDialog.kt" -exec sed -i 's/isDraggableOnNestedScroll/isDraggable/g' {} \;
+
+        # 4. 防 Material 组件崩溃（强制追加混淆规则）
+        echo "" >> proguard-rules.pro
+        echo "# 强制追加防 Material 混淆" >> proguard-rules.pro
+        echo "-keep class com.google.android.material.** {*;}" >> proguard-rules.pro
+        echo "-dontwarn com.google.android.material.**" >> proguard-rules.pro
 
     - name: 编译正式版 Release APK
       run: |
@@ -151,7 +154,7 @@ jobs:
         name: legado-debug-apk
         path: app/build/outputs/apk/debug/legado-build.apk
 
-    - name: 打包修改好的纯净源码 (使用最高压缩率 -9)
+    - name: 打包修改好的纯净源码 (使用最高压缩率 -9，保持 9MB 左右)
       run: |
         zip -r -9 modified-sources.zip . -x "*.git*" -x ".github/*" -x "*.zip" -x "**/build/*" -x "app/build/*" -x ".gradle/*" -x ".idea/*" -x ".kotlin/*"
 
@@ -163,6 +166,7 @@ jobs:
 
     - name: 将修改后的源码推回 GitHub 仓库
       run: |
+        cd ..
         git config --global user.name "github-actions[bot]"
         git config --global user.email "actions@github.com"
         git add -A
