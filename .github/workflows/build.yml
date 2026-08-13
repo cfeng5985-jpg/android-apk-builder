@@ -1,3 +1,4 @@
+
 name: Build Legado APK
 
 on:
@@ -5,23 +6,48 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
-# 添加写入权限，让脚本有权限把代码推回 main
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-      # 现在这一步直接把你在网页上改好的最新代码拉下来了，不需要去解压什么 ZIP 包！
 
     - name: Set up JDK 17
       uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
         java-version: '17'
+
+    - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件
+      run: |
+        ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
+        if [ -z "$ZIP_FILE" ]; then
+          echo "❌ 未找到 legado-*.zip 文件！"
+          exit 1
+        fi
+        echo "✅ 找到 zip 文件：$ZIP_FILE"
+        cp "$ZIP_FILE" ./legado-src.zip
+        rm -rf app docs gradle .gitignore CONTRIBUTING.md LICENSE README.md build.gradle gradle.properties gradlew gradlew.bat settings.gradle
+        unzip -o legado-src.zip
+        rm -f legado-src.zip
+        EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
+        if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
+          echo "✅ 发现解压文件夹：$EXTRACTED_DIR"
+          shopt -s dotglob
+          for item in "$EXTRACTED_DIR"/*; do
+            basename=$(basename "$item")
+            if [ "$basename" != ".github" ] && [ "$basename" != ".git" ]; then
+              mv "$item" ./
+            else
+              echo "⏭️ 跳过 $basename"
+            fi
+          done
+          rm -rf "$EXTRACTED_DIR"
+        fi
+        chmod +x gradlew 2>/dev/null || echo "⚠️ gradlew 不存在"
+        echo "=== 根目录内容 ==="
+        ls -la
 
     - name: 修补缺失颜色、内存，配置 Release 版混淆，强制修改 minSdk 为 26
       run: |
@@ -43,14 +69,16 @@ jobs:
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-XX:+UseParallelGC -Xmx8g -Xms512m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
         fi
 
-        # 3. 强制修改 minSdk 为 26
+        # 3. 全网精确查找并替换所有可能写法的 minSdk 为 26
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 23/minSdkVersion 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdk 23/minSdk 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdkVersion 21/minSdkVersion 26/g' {} \;
         find . -name "build.gradle" -exec sed -i 's/minSdk 21/minSdk 26/g' {} \;
+
+        # 4. 在 app/build.gradle 最末尾追加强制覆盖 minSdk
         echo "android.defaultConfig.minSdkVersion 26" >> app/build.gradle
 
-        # 4. 开启 Multidex、启用 Desugaring
+        # 5. 开启 Multidex、启用 Desugaring
         if [ -f app/build.gradle ]; then
           if ! grep -q "multiDexEnabled" app/build.gradle; then
             sed -i '/defaultConfig {/a\        multiDexEnabled true' app/build.gradle
@@ -63,11 +91,13 @@ jobs:
           fi
         fi
 
-        # 5. 开启混淆和资源压缩
+        # 6. ✨ 只针对 Release 正式包强制开启代码混淆和资源压缩
         sed -i 's/minifyEnabled false/minifyEnabled true/g' app/build.gradle
         sed -i '/release {/a\            shrinkResources true' app/build.gradle
 
-        # 6. 追加混淆规则
+        # ==========================================
+        # 👇 防 Material 组件崩溃（强制追加混淆规则）
+        # ==========================================
         echo "" >> proguard-rules.pro
         echo "# 强制追加防 Material 混淆" >> proguard-rules.pro
         echo "-keep class com.google.android.material.** {*;}" >> proguard-rules.pro
@@ -97,7 +127,7 @@ jobs:
         name: build-log-txt
         path: build.log
 
-    - name: 查找 APK
+    - name: 查找并定位 APK 文件
       run: |
         APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
         if [ -n "$APK_FILE" ]; then
@@ -115,13 +145,21 @@ jobs:
         name: legado-debug-apk
         path: app/build/outputs/apk/debug/legado-build.apk
 
-    # ==========================================
-    # 现在不需要打包源码上传了，我们直接推回 main
-    # ==========================================
-    - name: 把修改后的代码自动推回 GitHub 仓库
+    - name: 打包修改好的纯净源码 (使用最高压缩率 -9，保持 9MB 左右)
       run: |
+        zip -r -9 modified-sources.zip . -x "*.git*" -x ".github/*" -x "*.zip" -x "**/build/*" -x "app/build/*" -x ".gradle/*" -x ".idea/*" -x ".kotlin/*"
+
+    - name: 上传修改后的源码包
+      uses: actions/upload-artifact@v4
+      with:
+        name: legado-modified-sources
+        path: modified-sources.zip
+
+    - name: 将修改后的源码推回 GitHub 仓库
+      run: |
+        cd ..
         git config --global user.name "github-actions[bot]"
         git config --global user.email "actions@github.com"
         git add -A
-        git commit -m "自动构建同步源码 [skip ci]" || echo "没有检测到文件变动，跳过提交"
-        git push -f origin main
+        git commit -m "自动构建成功：强制覆盖网页源码 [skip ci]" || echo "没有检测到文件变动，跳过提交"
+        git push -f origin source
