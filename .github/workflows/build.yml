@@ -24,7 +24,8 @@ jobs:
 
     - name: 找到 zip → 复制 → 删旧文件 → 解压 → 移文件
       run: |
-        ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
+        # 直接告诉它包名叫什么，不用它自己猜
+        ZIP_FILE="legado-3.26080821.zip"
         if [ -z "$ZIP_FILE" ]; then
           echo "❌ 未找到 legado-*.zip 文件！"
           exit 1
