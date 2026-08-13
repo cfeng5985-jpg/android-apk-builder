@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:maxHeight="450dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- 1. 引擎名称 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="引擎名称：" />
+        <EditText
+            android:id="@+id/et_engine_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:hint="请输入高级引擎名称" />
+
+        <!-- 2. 段落间隔 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="段落间隔 (毫秒 0-10000)：" />
+        <EditText
+            android:id="@+id/et_paragraph_interval"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:singleLine="true"
+            android:hint="例如：500" />
+
+        <!-- 3. 通信模式 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="通信模式：" />
+        <RadioGroup
+            android:id="@+id/rg_comm_mode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <RadioButton
+                android:id="@+id/rb_http"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="普通 HTTP（原版）" />
+            <RadioButton
+                android:id="@+id/rb_websocket"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="多步前置 + WebSocket 流式"
+                android:checked="true" />
+        </RadioGroup>
+
+        <!-- 4. 前置请求链 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="前置请求链 (先填入 JSON 配置)：" />
+        <EditText
+            android:id="@+id/et_pre_requests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minLines="3"
+            android:gravity="top|start"
+            android:hint="例如：[{\&quot;method\&quot;:\&quot;POST\&quot;,\&quot;url\&quot;:\&quot;https://xxx/token\&quot;}]" />
+
+        <!-- 5. 底部按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="20dp">
+
+            <Button
+                android:id="@+id/btn_debug_step"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="单步调试" />
+
+            <Button
+                android:id="@+id/btn_debug_full"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="调试链路" />
+
+            <Button
+                android:id="@+id/btn_save_engine"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="保存"
+                android:backgroundTint="#8B4513"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

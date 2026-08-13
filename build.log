@@ -1,0 +1,257 @@
+
+> Configure project :app
+WARNING: BuildType 'debug' is both debuggable and has 'isMinifyEnabled' set to true.
+All code optimizations and obfuscation are disabled for debuggable builds.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preAppReleaseBuild UP-TO-DATE
+> Task :app:mergeAppReleaseJniLibFolders
+> Task :modules:book:preBuild UP-TO-DATE
+> Task :modules:book:preReleaseBuild UP-TO-DATE
+> Task :modules:book:mergeReleaseJniLibFolders
+> Task :modules:book:mergeReleaseNativeLibs NO-SOURCE
+> Task :modules:rhino:preBuild UP-TO-DATE
+> Task :modules:rhino:preReleaseBuild UP-TO-DATE
+> Task :modules:book:copyReleaseJniLibsProjectOnly
+> Task :modules:rhino:mergeReleaseJniLibFolders
+> Task :modules:rhino:mergeReleaseNativeLibs NO-SOURCE
+> Task :modules:rhino:copyReleaseJniLibsProjectOnly
+> Task :modules:book:prepareReleaseArtProfile
+> Task :app:mergeAppReleaseNativeLibs
+> Task :modules:rhino:prepareReleaseArtProfile
+> Task :app:mergeAppReleaseArtProfile
+> Task :app:stripAppReleaseDebugSymbols
+> Task :modules:book:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :modules:book:generateReleaseResources
+> Task :app:extractAppReleaseNativeSymbolTables
+> Task :modules:book:packageReleaseResources
+> Task :app:mergeAppReleaseNativeDebugMetadata NO-SOURCE
+> Task :modules:book:processReleaseNavigationResources
+> Task :app:expandAppReleaseL8ArtProfileWildcards
+> Task :modules:rhino:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :modules:book:javaPreCompileRelease
+> Task :modules:rhino:generateReleaseResources
+> Task :modules:rhino:packageReleaseResources
+> Task :modules:rhino:processReleaseNavigationResources
+> Task :modules:rhino:javaPreCompileRelease
+> Task :modules:book:parseReleaseLocalResources
+> Task :modules:rhino:parseReleaseLocalResources
+> Task :app:buildKotlinToolingMetadata
+> Task :modules:book:generateReleaseRFile
+> Task :modules:rhino:generateReleaseRFile
+> Task :modules:book:compileReleaseKotlin NO-SOURCE
+> Task :app:checkAppReleaseDuplicateClasses
+> Task :modules:book:compileReleaseJavaWithJavac
+> Task :modules:book:mergeReleaseGeneratedProguardFiles
+> Task :modules:book:exportReleaseConsumerProguardFiles
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:dataBindingMergeDependencyArtifactsAppRelease
+> Task :app:generateAppReleaseResources
+> Task :app:processAppReleaseGoogleServices
+> Task :app:packageAppReleaseResources
+> Task :app:processAppReleaseNavigationResources
+> Task :app:generateAppReleaseBuildConfig
+> Task :modules:book:writeReleaseAarMetadata
+> Task :modules:rhino:writeReleaseAarMetadata
+> Task :app:parseAppReleaseLocalResources
+> Task :app:compileAppReleaseNavigationResources
+> Task :app:checkAppReleaseAarMetadata
+> Task :app:mapAppReleaseSourceSetPaths
+> Task :app:createAppReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksAppRelease
+> Task :modules:book:extractDeepLinksRelease
+> Task :modules:rhino:extractDeepLinksRelease
+> Task :modules:rhino:processReleaseManifest
+> Task :modules:book:processReleaseManifest
+> Task :app:mergeAppReleaseResources
+> Task :modules:book:bundleLibCompileToJarRelease
+> Task :app:processAppReleaseMainManifest
+> Task :app:dataBindingGenBaseClassesAppRelease
+> Task :app:processAppReleaseManifest
+> Task :modules:rhino:compileReleaseKotlin
+> Task :app:javaPreCompileAppRelease
+> Task :modules:rhino:compileReleaseJavaWithJavac
+> Task :modules:rhino:mergeReleaseGeneratedProguardFiles
+> Task :modules:rhino:exportReleaseConsumerProguardFiles
+> Task :modules:rhino:bundleLibCompileToJarRelease
+> Task :modules:book:bundleLibRuntimeToJarRelease
+> Task :app:processAppReleaseManifestForPackage
+> Task :modules:rhino:bundleLibRuntimeToJarRelease
+> Task :app:extractProguardFiles
+> Task :modules:book:processReleaseJavaRes
+> Task :modules:rhino:processReleaseJavaRes
+> Task :app:mergeAppReleaseStartupProfile
+> Task :app:generateAppReleaseAssets UP-TO-DATE
+> Task :modules:book:generateReleaseAssets UP-TO-DATE
+> Task :modules:book:mergeReleaseAssets
+> Task :modules:rhino:generateReleaseAssets UP-TO-DATE
+> Task :modules:rhino:mergeReleaseAssets
+> Task :app:mergeAppReleaseAssets
+> Task :app:extractAppReleaseVersionControlInfo
+> Task :modules:book:createFullJarRelease
+> Task :modules:book:extractProguardFiles
+> Task :app:compressAppReleaseAssets
+> Task :modules:book:generateReleaseLintModel
+> Task :modules:book:prepareLintJarForPublish
+> Task :modules:rhino:createFullJarRelease
+> Task :modules:rhino:extractProguardFiles
+> Task :modules:rhino:generateReleaseLintModel
+> Task :modules:rhino:prepareLintJarForPublish
+> Task :modules:book:stripReleaseDebugSymbols NO-SOURCE
+> Task :modules:book:extractDeepLinksForAarRelease
+> Task :modules:book:checkReleaseAarMetadata
+> Task :modules:book:copyReleaseJniLibsProjectAndLocalJars
+> Task :app:processAppReleaseResources
+> Task :modules:book:extractReleaseAnnotations
+> Task :modules:book:mergeReleaseConsumerProguardFiles
+> Task :modules:rhino:stripReleaseDebugSymbols NO-SOURCE
+> Task :modules:rhino:checkReleaseAarMetadata
+> Task :modules:rhino:extractDeepLinksForAarRelease
+> Task :modules:rhino:copyReleaseJniLibsProjectAndLocalJars
+> Task :modules:rhino:extractReleaseAnnotations
+> Task :modules:rhino:mergeReleaseConsumerProguardFiles
+> Task :modules:rhino:mergeReleaseJavaResource
+> Task :modules:book:mergeReleaseJavaResource
+> Task :modules:rhino:syncReleaseLibJars
+> Task :modules:book:syncReleaseLibJars
+> Task :modules:book:bundleReleaseLocalLintAar
+> Task :modules:rhino:bundleReleaseLocalLintAar
+> Task :modules:book:writeReleaseLintModelMetadata
+> Task :modules:rhino:writeReleaseLintModelMetadata
+> Task :modules:book:generateReleaseLintVitalModel
+> Task :modules:rhino:generateReleaseLintVitalModel
+> Task :app:collectAppReleaseDependencies
+> Task :app:sdkAppReleaseDependencyData
+> Task :app:writeAppReleaseAppMetadata
+> Task :app:writeAppReleaseSigningConfigVersions
+> Task :modules:book:bundleReleaseAar
+> Task :modules:book:mapReleaseSourceSetPaths
+> Task :modules:book:mergeReleaseResources
+> Task :modules:book:verifyReleaseResources
+> Task :modules:book:assembleRelease
+> Task :modules:rhino:bundleReleaseAar
+> Task :modules:rhino:mapReleaseSourceSetPaths
+> Task :modules:rhino:mergeReleaseResources
+> Task :modules:rhino:verifyReleaseResources
+> Task :modules:rhino:assembleRelease
+> Task :modules:book:lintVitalAnalyzeRelease
+> Task :modules:rhino:lintVitalAnalyzeRelease
+> Task :app:kspAppReleaseKotlin
+> Task :app:compileAppReleaseKotlin
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:15:40 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:16:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:17:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:18:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:19:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:20:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:21:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:22:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:23:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:24:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:25:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:26:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:27:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:28:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:29:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:30:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:31:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:32:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:33:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:34:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:35:16 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:39:8 'class AudioFocusRequestCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:40:35 'class AudioAttributesCompat : Any, VersionedParcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:40:57 'constructor(): AudioAttributesCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:41:23 'class AudioAttributesCompat : Any, VersionedParcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:42:29 'class AudioAttributesCompat : Any, VersionedParcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:44:16 'class AudioFocusRequestCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:44:40 'constructor(p0: Int): AudioFocusRequestCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:44:48 'class AudioManagerCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:54:36 'class AudioFocusRequestCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/help/MediaHelp.kt:55:23 'class AudioManagerCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:109:52 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:110:20 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:111:20 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:112:20 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:113:20 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:114:20 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:142:32 'class AudioFocusRequestCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:149:9 'constructor(p0: Context, p1: String): MediaSessionCompat' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:176:37 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:220:49 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:228:49 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:278:37 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:385:41 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:558:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:558:44 'constructor(): MediaMetadataCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:559:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:560:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:561:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:562:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:563:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:733:49 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:749:13 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:749:33 'constructor(): PlaybackStateCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:773:13 'class MediaSessionCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:773:32 'static field FLAG_HANDLES_MEDIA_BUTTONS: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:774:21 'class MediaSessionCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:774:40 'static field FLAG_HANDLES_TRANSPORT_CONTROLS: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:776:68 'class Callback : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:936:32 'class NotificationCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/AudioPlayService.kt:936:51 'constructor(): NotificationCompat.MediaStyle' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:75:9 'constructor(p0: Context, p1: String): MediaSessionCompat' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:253:13 'class MediaSessionCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:253:32 'static field FLAG_HANDLES_MEDIA_BUTTONS: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:254:21 'class MediaSessionCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:254:40 'static field FLAG_HANDLES_TRANSPORT_CONTROLS: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:256:68 'class Callback : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:328:41 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:360:45 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:369:13 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:369:33 'constructor(): PlaybackStateCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:424:32 'class NotificationCompat : Any' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:424:51 'constructor(): NotificationCompat.MediaStyle' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:582:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:582:44 'constructor(): MediaMetadataCompat.Builder' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:583:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:584:24 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:585:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:586:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:587:22 'class MediaMetadataCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/service/VideoPlayService.kt:601:41 'class PlaybackStateCompat : Any, Parcelable' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/android-apk-builder/android-apk-builder/app/src/main/java/io/legado/app/ui/code/CodeEditViewModel.kt:249:16 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
+
+> Task :app:compileAppReleaseJavaWithJavac
+> Task :app:mergeAppReleaseGeneratedProguardFiles
+> Task :app:processAppReleaseJavaRes
+> Task :app:expandAppReleaseArtProfileWildcards
+> Task :app:copyRoomSchemas NO-SOURCE
+> Task :app:generateAppReleaseLintVitalReportModel
+> Task :app:mergeAppReleaseJavaResource
+
+> Task :app:minifyAppReleaseWithR8
+WARNING: R8: Class file resource provider does not support async parsing: com.android.builder.dexing.r8.ClassFileProviderFactory$OrderedClassFileResourceProvider
+WARNING: R8: Class file resource provider does not support async parsing: com.android.builder.dexing.r8.ClassFileProviderFactory$OrderedClassFileResourceProvider
+
+> Task :app:lintVitalAnalyzeAppRelease
+> Task :app:lintVitalReportAppRelease
+> Task :app:lintVitalAppRelease
+> Task :app:convertShrunkResourcesToBinaryAppRelease
+> Task :app:optimizeAppReleaseResources
+> Task :app:l8DexDesugarLibAppRelease
+> Task :app:compileAppReleaseArtProfile
+> Task :app:packageAppRelease
+> Task :app:createAppReleaseApkListingFileRedirect
+> Task :app:assembleAppRelease
+> Task :app:assembleRelease
+
+[Incubating] Problems report is available at: file:///home/runner/work/android-apk-builder/android-apk-builder/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 10m 13s
+131 actionable tasks: 131 executed

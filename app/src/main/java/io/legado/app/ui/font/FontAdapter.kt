@@ -1,0 +1,78 @@
+package io.legado.app.ui.font
+
+import android.content.Context
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.view.ViewGroup
+import io.legado.app.base.adapter.ItemViewHolder
+import io.legado.app.base.adapter.RecyclerAdapter
+import io.legado.app.constant.AppLog
+import io.legado.app.databinding.ItemFontBinding
+import io.legado.app.lib.theme.accentColor
+import io.legado.app.utils.*
+import java.io.File
+import java.net.URLDecoder
+
+class FontAdapter(context: Context, curFilePath: String, val callBack: CallBack) :
+    RecyclerAdapter<FileDoc, ItemFontBinding>(context) {
+
+    private val curName = kotlin.runCatching {
+        URLDecoder.decode(curFilePath, "utf-8")
+    }.getOrNull()?.substringAfterLast(File.separator)
+
+    override fun getViewBinding(parent: ViewGroup): ItemFontBinding {
+        return ItemFontBinding.inflate(inflater, parent, false)
+    }
+
+    override fun convert(
+        holder: ItemViewHolder,
+        binding: ItemFontBinding,
+        item: FileDoc,
+        payloads: MutableList<Any>
+    ) {
+        binding.run {
+            tvFont.typeface = kotlin.runCatching {
+                if (item.isContentScheme) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.contentResolver
+                            .openFileDescriptor(item.uri, "r")?.use {
+                                Typeface.Builder(it.fileDescriptor).build()
+                            }
+                    } else {
+                        Typeface.createFromFile(RealPathUtil.getPath(context, item.uri))
+                    }
+                } else {
+                    Typeface.createFromFile(item.uri.path!!)
+                }
+            }.onFailure {
+                it.printOnDebug()
+                AppLog.put("读取字体 ${item.name} 出错\n${it.localizedMessage}", it, true)
+            }.getOrNull() ?: Typeface.DEFAULT
+            tvFont.text = item.name
+            root.setOnClickListener { callBack.onFontSelect(item) }
+            val selected = item.name == curName
+            ivChecked.visible(selected)
+            rootCard.background = GradientDrawable().apply {
+                cornerRadius = 4.dpToPx().toFloat()
+                setColor(Color.TRANSPARENT)
+                if (selected) {
+                    setStroke(2.dpToPx(), context.accentColor)
+                }
+            }
+        }
+    }
+
+    override fun registerListener(holder: ItemViewHolder, binding: ItemFontBinding) {
+        holder.itemView.setOnClickListener {
+            getItem(holder.layoutPosition)?.let {
+                callBack.onFontSelect(it)
+            }
+        }
+    }
+
+    interface CallBack {
+        fun onFontSelect(docItem: FileDoc)
+    }
+}
