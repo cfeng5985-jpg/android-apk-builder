@@ -95,18 +95,8 @@ jobs:
         sed -i '/release {/a\            shrinkResources true' app/build.gradle
 
         # ==========================================
-        # 👇 2026-08-13 完美缝合修复
+        # 👇 防 Material 组件崩溃（强制追加混淆规则）
         # ==========================================
-        # 1. 锁定 Material 1.12.0
-        sed -i 's/material = "1.9.0"/material = "1.12.0"/g' gradle/libs.versions.toml
-
-        # 2. 自动把 WallpaperTheme.kt 里的 MaterialDynamicColors() 改成 getInstance()
-        find app -name "WallpaperTheme.kt" -exec sed -i 's/MaterialDynamicColors()/MaterialDynamicColors.getInstance()/g' {} \;
-
-        # 3. 💡【核心新增修复】把 BottomWebViewDialog.kt 里的旧属性替换成新版本支持的属性，解决报错
-        find app -name "BottomWebViewDialog.kt" -exec sed -i 's/isDraggableOnNestedScroll/isDraggable/g' {} \;
-
-        # 4. 防 Material 组件崩溃（强制追加混淆规则）
         echo "" >> proguard-rules.pro
         echo "# 强制追加防 Material 混淆" >> proguard-rules.pro
         echo "-keep class com.google.android.material.** {*;}" >> proguard-rules.pro
