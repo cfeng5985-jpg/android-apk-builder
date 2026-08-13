@@ -1,9 +1,14 @@
+
 name: Build Legado APK
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
+
+# 添加写入权限，解决推不回仓库的问题
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -94,24 +99,6 @@ jobs:
         sed -i 's/minifyEnabled false/minifyEnabled true/g' app/build.gradle
         sed -i '/release {/a\            shrinkResources true' app/build.gradle
 
-        # ==========================================
-        # 👇 2026-08-13 完美缝合修复
-        # ==========================================
-        # 1. 锁定 Material 1.12.0
-        sed -i 's/material = "1.9.0"/material = "1.12.0"/g' gradle/libs.versions.toml
-
-        # 2. 自动把 WallpaperTheme.kt 里的 MaterialDynamicColors() 改成 getInstance()
-        find app -name "WallpaperTheme.kt" -exec sed -i 's/MaterialDynamicColors()/MaterialDynamicColors.getInstance()/g' {} \;
-
-        # 3. 💡【核心新增修复】把 BottomWebViewDialog.kt 里的旧属性替换成新版本支持的属性，解决报错
-        find app -name "BottomWebViewDialog.kt" -exec sed -i 's/isDraggableOnNestedScroll/isDraggable/g' {} \;
-
-        # 4. 防 Material 组件崩溃（强制追加混淆规则）
-        echo "" >> proguard-rules.pro
-        echo "# 强制追加防 Material 混淆" >> proguard-rules.pro
-        echo "-keep class com.google.android.material.** {*;}" >> proguard-rules.pro
-        echo "-dontwarn com.google.android.material.**" >> proguard-rules.pro
-
     - name: 编译正式版 Release APK
       run: |
         if [ -f gradlew ]; then
@@ -166,9 +153,9 @@ jobs:
 
     - name: 将修改后的源码推回 GitHub 仓库
       run: |
-        cd ..
         git config --global user.name "github-actions[bot]"
         git config --global user.email "actions@github.com"
         git add -A
         git commit -m "自动构建成功：强制覆盖网页源码 [skip ci]" || echo "没有检测到文件变动，跳过提交"
-        git push -f origin source
+        # 修复1：将 source 改成了 main 分支，避免推错分支
+        git push -f origin main
