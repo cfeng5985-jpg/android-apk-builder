@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 稀疏检出，只下载根目录的源码zip，不拉取仓库内错乱源码
+      # 只拉取仓库里的legado源码zip，不下载其他错乱源码
       - name: Download source zip only
         uses: actions/checkout@v4
         with:
@@ -16,15 +16,15 @@ jobs:
             legado-*.zip
           sparse-checkout-cone-mode: false
 
-      # 配置JDK17，移除gradle缓存（稀疏检出不支持缓存）
+      # JDK17，无gradle缓存（稀疏检出不支持缓存）
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 解压原始干净源码包
-      - name: Unzip clean source
+      # 解压干净原始源码包
+      - name: Unzip clean source archive
         run: |
           ls -la
           ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
@@ -32,10 +32,10 @@ jobs:
             echo "❌ 未找到 legado 源码压缩包！"
             exit 1
           fi
-          echo "✅ 解压文件：$ZIP_FILE"
+          echo "✅ 准备解压: $ZIP_FILE"
           unzip -q -o "$ZIP_FILE"
           rm -f "$ZIP_FILE"
-          # 处理解压嵌套文件夹
+          # 处理解压后嵌套文件夹
           EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
           if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
             shopt -s dotglob
@@ -45,35 +45,32 @@ jobs:
           chmod +x gradlew
           ls -la
 
-      # 安全修补配置：仅改颜色、签名、minSdk，不操作compileOptions/desugar
-      - name: Patch project config (safe only)
+      # 安全修补脚本：无删除整块代码操作，不会破坏大括号
+      - name: Safe patch config
         run: |
-          # 1. 自动补全缺失的三个基础颜色
+          # 1. 自动补全缺失基础颜色
           find . -name "colors.xml" -type f | while read -r colorfile; do
             grep -q "name=\"colorPrimary\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
             grep -q "name=\"colorPrimaryDark\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorPrimaryDark">#303F9F</color>' "$colorfile"
             grep -q "name=\"colorAccent\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' "$colorfile"
           done
 
-          # 2. 删除签名配置，避免无密钥打包报错
+          # 2. 仅移除release块内的签名引用，不删除整个signingConfigs代码块
           if [ -f app/build.gradle ]; then
-            sed -i 's/signingConfig signingConfigs.release//g' app/build.gradle
-            sed -i '/signingConfigs {/,/}/d' app/build.gradle
-            # 修改minSdk为21，这条不会破坏括号结构
-            sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' app/build.gradle
+            sed -i 's/signingConfig = signingConfigs.myConfig//g' app/build.gradle
           fi
 
-      # 完整日志构建，输出同时写入build.log
-      - name: Compile Release APK
+      # 编译Release，完整输出写入build.log
+      - name: Build Release APK
         run: |
           ./gradlew assembleRelease --parallel --build-cache 2>&1 | tee build.log
           EXIT_CODE=${PIPESTATUS[0]}
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "❌ Gradle 编译失败，退出码: $EXIT_CODE"
+            echo "❌ Gradle编译失败，退出码: $EXIT_CODE"
             exit $EXIT_CODE
           fi
 
-      # 无论成功失败都上传编译日志
+      # 无论成功失败都上传日志
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
@@ -81,8 +78,8 @@ jobs:
           name: build-log-txt
           path: build.log
 
-      # 编译成功才上传APK安装包
-      - name: Upload unsigned Release APK
+      # 上传未签名APK
+      - name: Upload unsigned APK
         uses: actions/upload-artifact@v4
         with:
           name: legado-release-apk
