@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 只拉取仓库文件（为了拿到zip，不把错乱源码展开到工作目录）
+      #稀疏检出，只拿zip包，不下载仓库那些坏掉源码
       - name: Download zip archive only
         uses: actions/checkout@v4
         with:
@@ -21,7 +21,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: gradle
+          # 👉删掉 cache: gradle ！稀疏检出模式不支持这个缓存
 
       - name: Unzip clean source zip
         run: |
@@ -30,10 +30,8 @@ jobs:
             echo "❌ zip文件不存在"
             exit 1
           fi
-          # 全部解压到当前目录，得到干净原始源码
           unzip -q -o legado-3.26080821.zip
           rm -f legado-3.26080821.zip
-          # 处理如果解压出来套了一层文件夹
           EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
           if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
             shopt -s dotglob
@@ -59,7 +57,7 @@ jobs:
 
       - name: Build APK
         run: |
-          ./gradlew assembleRelease --parallel --build-cache -q 2>&1 | tee build.log
+          ./gradlew assembleRelease --parallel --build-cache 2>&1 | tee build.log
           EXIT_CODE=${PIPESTATUS[0]}
           if [ $EXIT_CODE -ne 0 ]; then exit $EXIT_CODE; fi
 
