@@ -3,93 +3,75 @@ on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      # 只拉取仓库文件（为了拿到zip，不把错乱源码展开到工作目录）
+      - name: Download zip archive only
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            legado-3.26080821.zip
+          sparse-checkout-cone-mode: false
 
-    # 改动1：setup-java开启gradle缓存，大幅减少依赖下载时间
-    - name: Set up JDK 17
-      uses: actions/setup-java@v5
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-        cache: gradle
-        cache-dependency-path: |
-          **/*.gradle*
-          gradle-wrapper.properties
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: gradle
 
-    # 改动2：优化解压逻辑，减少文件移动/删除IO开销
-    - name: 解压源码包（优化IO）
-      run: |
-        ZIP_FILE=$(find . -name "legado-*.zip" -type f | head -n 1)
-        if [ -z "$ZIP_FILE" ]; then
-          echo "❌ 未找到 legado-*.zip 文件！"
-          exit 1
-        fi
-        echo "✅ 找到 zip 文件：$ZIP_FILE"
-        # 不提前删全量文件，直接解压覆盖，省去rm -rf大量小文件IO
-        unzip -q -o "$ZIP_FILE"
-        rm -f "$ZIP_FILE"
-        # 处理内层文件夹
-        EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
-        if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
-          shopt -s dotglob
-          mv "$EXTRACTED_DIR"/* ./
-          rm -rf "$EXTRACTED_DIR"
-        fi
-        chmod +x gradlew 2>/dev/null || echo "⚠️ gradlew 不存在"
+      - name: Unzip clean source zip
+        run: |
+          ls -la
+          if [ ! -f "legado-3.26080821.zip" ]; then
+            echo "❌ zip文件不存在"
+            exit 1
+          fi
+          # 全部解压到当前目录，得到干净原始源码
+          unzip -q -o legado-3.26080821.zip
+          rm -f legado-3.26080821.zip
+          # 处理如果解压出来套了一层文件夹
+          EXTRACTED_DIR=$(find . -maxdepth 2 -type d -name "legado-*" | grep -v "\./\.git" | head -n 1)
+          if [ -n "$EXTRACTED_DIR" ] && [ "$EXTRACTED_DIR" != "." ]; then
+            shopt -s dotglob
+            mv "$EXTRACTED_DIR"/* ./
+            rm -rf "$EXTRACTED_DIR"
+          fi
+          chmod +x gradlew
 
-    - name: 修补颜色/签名/minSdk/Desugaring（原有逻辑不动，保留）
-      run: |
-        # 1. 修补缺失的颜色
-        find . -name "colors.xml" -type f | while read -r colorfile; do
-          grep -q "name=\"colorPrimary\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
-          grep -q "name=\"colorPrimaryDark\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorPrimaryDark">#303F9F</color>' "$colorfile"
-          grep -q "name=\"colorAccent\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' "$colorfile"
-        done
-        # 2. 删除签名配置
-        if [ -f app/build.gradle ]; then
-          sed -i 's/signingConfig signingConfigs.release//g' app/build.gradle
-          sed -i '/signingConfigs {/,/}/d' app/build.gradle
-        fi
-        # 3. minSdk21 + desugaring
-        if [ -f app/build.gradle ]; then
-          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' app/build.gradle
-          grep -q "coreLibraryDesugaringEnabled" app/build.gradle || sed -i '/compileOptions {/a\        coreLibraryDesugaringEnabled true' app/build.gradle
-          grep -q "desugar_jdk_libs" app/build.gradle || sed -i '/dependencies {/a\    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.2.3"' app/build.gradle
-        fi
+      - name: Patch project config
+        run: |
+          find . -name "colors.xml" -type f | while read -r colorfile; do
+            grep -q "name=\"colorPrimary\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorPrimary">#3F51B5</color>' "$colorfile"
+            grep -q "name=\"colorPrimaryDark\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorPrimaryDark">#303F9F</color>' "$colorfile"
+            grep -q "name=\"colorAccent\"" "$colorfile" || sed -i '/<\/resources>/i\    <color name="colorAccent">#FF4081</color>' "$colorfile"
+          done
+          if [ -f app/build.gradle ]; then
+            sed -i 's/signingConfig signingConfigs.release//g' app/build.gradle
+            sed -i '/signingConfigs {/,/}/d' app/build.gradle
+            sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' app/build.gradle
+            grep -q "coreLibraryDesugaringEnabled" app/build.gradle || sed -i '/compileOptions {/a\        coreLibraryDesugaringEnabled true' app/build.gradle
+            grep -q "desugar_jdk_libs" app/build.gradle || sed -i '/dependencies {/a\    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.2.3"' app/build.gradle
+          fi
 
-    # 改动3：Gradle编译加全套提速参数，去掉无用clean，开启并行+缓存+大内存
-    - name: 编译未签名Release APK
-      run: |
-        if [ ! -f gradlew ]; then
-          echo "❌ gradlew 不存在"
-          exit 1
-        fi
-        # 关键优化参数：
-        # --parallel 多模块并行编译
-        # --build-cache 复用构建产物
-        # -Xmx4g 分配4G内存防止虚拟机卡顿
-        # -q 简化日志输出，减少刷屏
-        ./gradlew assembleRelease --parallel --build-cache -Xmx4g -q > build.log 2>&1
-        EXIT_CODE=$?
-        if [ $EXIT_CODE -ne 0 ]; then
-          echo "❌ 编译失败，下载build-log-txt查看日志"
-          exit $EXIT_CODE
-        fi
+      - name: Build APK
+        run: |
+          ./gradlew assembleRelease --parallel --build-cache -q 2>&1 | tee build.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ $EXIT_CODE -ne 0 ]; then exit $EXIT_CODE; fi
 
-    - name: 上传编译日志
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-log-txt
-        path: build.log
+      - name: Upload log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-txt
+          path: build.log
 
-    - name: 上传未签名 APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: legado-release-unsigned-apk
-        path: app/build/outputs/apk/release/*.apk
-
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: legado-apk
+          path: app/build/outputs/apk/release/*.apk
