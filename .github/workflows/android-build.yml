@@ -48,7 +48,7 @@ jobs:
         echo "=== 根目录内容 ==="
         ls -la
 
-    - name: 修补缺失颜色 + 提升 minSdk + 启用 Desugaring
+    - name: 修补缺失颜色 + 移除签名配置 + 提升 minSdk + 启用 Desugaring
       run: |
         # 1. 修补缺失的颜色
         find . -name "colors.xml" -type f | while read -r colorfile; do
@@ -63,11 +63,13 @@ jobs:
           fi
         done
 
-        # 2. 修改 gradle.properties（已删除会导致 AGP 8.x 崩溃的废弃配置 android.enableR8 / android.enableD8）
-        # if [ -f gradle.properties ]; then
-        #   echo "android.enableR8=false" >> gradle.properties
-        #   echo "android.enableD8=false" >> gradle.properties
-        # fi
+        # 2. 删除 app/build.gradle 中默认的签名配置，防止 assembleRelease 找不到 keystore 报错
+        if [ -f app/build.gradle ]; then
+          # 去掉 buildTypes release 里调用的签名
+          sed -i 's/signingConfig signingConfigs.release//g' app/build.gradle
+          # 直接删掉整个 signingConfigs 代码块
+          sed -i '/signingConfigs {/,/}/d' app/build.gradle
+        fi
 
         # 3. 修改 app/build.gradle：提升 minSdk + 添加 desugaring
         if [ -f app/build.gradle ]; then
@@ -82,17 +84,33 @@ jobs:
           fi
         fi
 
-    - name: 编译 Debug APK
+    - name: 编译未签名正式版 Release APK
       run: |
         if [ -f gradlew ]; then
-          ./gradlew assembleDebug --stacktrace --info
+          set +e
+          ./gradlew clean
+          # 将编译输出全部存入 build.log 文件
+          ./gradlew assembleRelease > build.log 2>&1
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "❌ 编译失败了！你可以到页面右下角 Artifacts 下载 'build-log-txt' 查看报错。"
+            exit $EXIT_CODE
+          fi
         else
           echo "❌ gradlew 不存在，退出"
           exit 1
         fi
 
-    - name: 上传 APK
+    - name: 上传编译日志
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: legado-debug-apk
-        path: app/build/outputs/apk/debug/*.apk
+        name: build-log-txt
+        path: build.log
+
+    - name: 上传未签名 APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: legado-release-unsigned-apk
+        path: app/build/outputs/apk/release/*.apk
